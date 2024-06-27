@@ -75,8 +75,8 @@ Vx = Vo*cosa
 
 X = Vo*cosa*T      	     and    X = L    =>     L = 2*Vo*cosa*Vo*sina/g  =>    **L = Vo*Vo*sin2a/g**      
 
-![im1](https://pascalbook.ru/gdz/r-0010476)
-![im1](https://pascalbook.ru/gdz/r-0010476)
+
+![im1](https://github.com/Sonakhach/Projectile-Motion-Simulator-Client-Server-in-C-GET-POST-with-Physics-/blob/main/image3-9.png)
 
 The max height is that height H (Y) that the body manages to reach before the vertical component of the velocity (Vy) becomes zero. The distance of the flight is the module L of the horizontal movement (X), which the body manages to make during the duration of the flight, that is, from the moment of throwing (To = 0) to the moment of falling to the ground (Y = 0).
 
