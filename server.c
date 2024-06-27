@@ -243,7 +243,7 @@ int main(int ac, char *av[]) {
         fprintf(stderr, "Usage: %s <IP> <PORT>\n", av[0]);
         exit(EXIT_FAILURE);
     }
-    if (strcmp(av[1], "127.0.0.1") != 0 && strcmp(av[1], "0.0.0.0") != 0 && strcmp(av[1], "localhost") != 0) {
+    if (strcmp(av[1], "127.0.0.1") != 0 && strcmp(av[1], "0.0.0.0") != 0) {
         fprintf(stderr, "Invalid IP address: %s\n", av[1]);
         exit(EXIT_FAILURE);
     }
@@ -270,7 +270,7 @@ int main(int ac, char *av[]) {
     }
     
     address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_addr.s_addr = inet_addr(av[1]);
     address.sin_port = htons(atoi(av[2]));
 
     if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {

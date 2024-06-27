@@ -125,7 +125,7 @@ void validate_arguments(int ac, char *av[]) {
     
     int port = atoi(av[2]);
 
-    if (strcmp(av[1], "127.0.0.1") != 0 && strcmp(av[1], "0.0.0.0") != 0 && strcmp(av[1], "localhost") != 0) {
+    if (strcmp(av[1], "127.0.0.1") != 0 && strcmp(av[1], "0.0.0.0") != 0) {
         fprintf(stderr, "Invalid IP address: %s\n", av[1]);
         exit(EXIT_FAILURE);
     }
@@ -161,6 +161,7 @@ void validate_arguments(int ac, char *av[]) {
 }
 
 void draw_trajectory(SDL_Renderer *renderer, double v0, double theta) {
+   
     double g = 9.82;
     double radian = theta * M_PI / 180.0;
     double time_of_flight = (2 * v0 * sin(radian)) / g;
@@ -168,7 +169,7 @@ void draw_trajectory(SDL_Renderer *renderer, double v0, double theta) {
     double time_step = max_time / 1000;
     double scale_factor_x = WINDOW_WIDTH / (v0 * cos(radian) * max_time);
     double scale_factor_y = WINDOW_HEIGHT / ((v0 * sin(radian)) * (v0 * sin(radian)) / (2 * g));
-
+    
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
     for (double t = 0; t <= max_time; t += time_step) {
@@ -176,10 +177,13 @@ void draw_trajectory(SDL_Renderer *renderer, double v0, double theta) {
         double y = (v0 * sin(radian) * t) - (0.5 * g * t * t);
         int screen_x = (int)(x * scale_factor_x);
         int screen_y = WINDOW_HEIGHT - (int)(y * scale_factor_y);
-
+             
         SDL_RenderDrawPoint(renderer, screen_x, screen_y);
     }
 }
+
+
+
 
 int main(int ac, char *av[]) {
     validate_arguments(ac, av);
@@ -205,9 +209,7 @@ int main(int ac, char *av[]) {
     }
 
     send_request(sock, message);
-    printf("send_request:\n%s\n", message);
     receive_response(sock, response);
-    printf("Server response:\n%s\n", response);
 
     double initial_velocity = 40.0;  
     double launch_angle = 60.0;     
@@ -217,8 +219,7 @@ int main(int ac, char *av[]) {
         launch_angle = atof(av[6]);
     }
 
-    printf("Initial Velocity: %lf\n", initial_velocity);
-    printf("Launch Angle: %lf\n", launch_angle);
+   
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         fprintf(stderr, "Could not initialize SDL: %s\n", SDL_GetError());
@@ -244,14 +245,15 @@ int main(int ac, char *av[]) {
             if (event.type == SDL_QUIT) {
                 quit = 1;
             }
-        }
 
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-        SDL_RenderClear(renderer);
 
+        SDL_RenderClear(renderer);
         draw_trajectory(renderer, initial_velocity, launch_angle);
+        }
 
         SDL_RenderPresent(renderer);
+        // pause();
     }
 
     SDL_DestroyRenderer(renderer);
