@@ -2,6 +2,14 @@
 ## Step 1: Compile the Programs
 For the server, you need the basic networking libraries, and for the client, you need SDL2 for graphical rendering.
 
+Install SDL Library: Use sudo apt install libsdl2-dev to install the SDL2 development libraries on Linux.
+```
+sudo apt install libsdl2-dev
+```
+Link Math Library: Use -lm when compiling to link against the math library (libm).
+
+Compile SDL Programs: Use -lSDL2 to link against the SDL2 library when compiling SDL programs.
+
 To compile the client application:
 ```
 gcc client.c -o client -lSDL2 -lm
@@ -44,19 +52,13 @@ After sending the request, the client will display the request sent and the serv
 The client application will also open a window using SDL2 to graphically display the trajectory of the projectile based on the initial velocity and launch angle provided. You can close the window by clicking the close button or pressing the escape key.
 
 ### Example Usage
-Start the server:
-```
-./server 127.0.0.1 8080  
-```
+
 Run a client with a GET request:
 ```
 ./client 127.0.0.1 8080 GET "TestProjectile" 50.0 45.0
 ```
-Run a client with a POST request:
-```
-./client 127.0.0.1 8080 POST "TestProjectile" 50.0 45.0
-```
-Additional Notes
+
+**Additional Notes**
 Ensure the server is running before starting the client.
 The server can handle multiple clients but processes one request at a time.
 The client will render the trajectory in a window and close it when you quit the SDL window.
@@ -65,24 +67,24 @@ The client will render the trajectory in a window and close it when you quit the
 # Physics Principles of Projectile Motion
 The principles of physics that are used to model the motion of projectiles are brought to the problem of a body thrown at an angle. The origin of the coordinate axes is the projectile launch point. When the initial velocity is directed to an angle, the Vo vector must initially be converted into horizontal and vertical components. Projecting equations of motion S=Vo t + a bury t2/2 and acceleration a = (V-Vo)/t on X and Y axes, we will have: 
 
-Vy =Vo*sina – g*t           and   Vy = 0    =>    0 = Vo*sina – g*t                =>    t =  Vo*sina/g 
+Vy =Vo*sina – g*t           and   Vy = 0    =>    0 = Vo*sina – g*t                =>    **t =  Vo*sina/g** 
 
 Y =  Vo*sina*t– g*t*t/2   and   Y = H    =>    H = Vo*sina*t – g*t*t/2  
 
 Vx = Vo*cosa                                              				
 
-X = Vo*cosa*T      	     and    X = L    =>     L = 2*Vo*cosa*Vo*sina/g  =>    L = Vo*Vo*sin2a/g      
+X = Vo*cosa*T      	     and    X = L    =>     L = 2*Vo*cosa*Vo*sina/g  =>    **L = Vo*Vo*sin2a/g**      
 
 ![im1](https://pascalbook.ru/gdz/r-0010476)
 ![im1](https://pascalbook.ru/gdz/r-0010476)
 
 The max height is that height H (Y) that the body manages to reach before the vertical component of the velocity (Vy) becomes zero. The distance of the flight is the module L of the horizontal movement (X), which the body manages to make during the duration of the flight, that is, from the moment of throwing (To = 0) to the moment of falling to the ground (Y = 0).
 
-To = 0     T = 2*Vo*sina/g
+To = 0     **T = 2*Vo*sina/g**
 
 The value To = 0 corresponds to the moment of the throw, and T is the time spent on the entire path.
 
-H = Vo*sina*t – g*t*t/2     and     t =  Vo*sina/g      =>  H =  Vo*sina* Vo*sina/2*g
+**H = Vo*sina*t – g*t*t/2**     and     **t =  Vo*sina/g**      =>  **H =  Vo*sina* Vo*sina/2*g**
 
 A thrown shot at an initial speed in the horizontal direction will quickly immerse itself in the ground, if shot vertically upwards, it will fall where it was thrown, and in order to throw as far as possible, it is necessary to hold the cannon at an angle to the horizon. And we have the max flight distance, when we hold the cannon at an angle of 45 degrees to the horizon /the surface of the image obtained by the velocity vectors is square/.
 
@@ -108,12 +110,12 @@ H =  Vo*sina* Vo*sina/2*g  <=>  max_height = (sin(theta) * sin(theta)) / (2 * g)
 
 The above formulas are equivalent, but I presented them in the structure so that the first one divides in a new multiplication in order to receive double number does not have a problem of going out of bounds.
 
-• theta = params.launch_angle * M_PI / 180.0
+• **theta = params.launch_angle * M_PI / 180.0**
 
 this formula converts the degree measure of an angle to a radian measure
 
-• g = 9.82    is the acceleration due to gravity (9.82 m/s2 near the surface of the earth).
-• #define The_first_space_velocity 8000
+• **g = 9.82**    is the acceleration due to gravity (9.82 m/s2 near the surface of the earth).
+• #define The_first_space_velocity **8000**
 
 A body that has developed this speed and is moving horizontally with respect to the surface of the planet will not fall on it, but will continue to move in a circular orbit.
 
@@ -194,12 +196,12 @@ struct Node* next;
 
 ##### These are prototype functions for handling GET and POST requests for projectile motion data on both the server and client sides.
 
-In server.c 
+**In server.c** 
 ```
 void handle_post_request(int client_socket, char *buffer);
 void handle_get_request(int client_socket, char *buffer);
 ```
-in client.c
+**in client.c**
 ```
 void send_request(int sock, const char *message) ;
 void receive_response(int sock);
