@@ -192,7 +192,7 @@ struct Node* next;
 3. Receiving Response:
     - The client reads the server's response and displays the confirmation message.
 ### Handling Errors
-  - The client handles connection errors, timeouts, and invalid responses by printing appropriate error messages and retrying if necessary.
+ - The client handles connection errors, timeouts, and invalid responses by printing appropriate error messages and retrying if necessary.
 
 ##### These are prototype functions for handling GET and POST requests for projectile motion data on both the server and client sides.
 
