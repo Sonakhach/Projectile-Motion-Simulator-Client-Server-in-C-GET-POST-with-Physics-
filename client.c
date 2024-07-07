@@ -11,11 +11,20 @@
 #include <math.h>
 
 #define BUFFER_SIZE 1024
-#define TIMEOUT_SEC 5
+#define TIMEOUT_SEC 1
 #define TIMEOUT_USEC 0
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
 #define The_first_space_velocity 8000
+
+typedef struct {
+    double initial_velocity;
+    double launch_angle;
+    double max_height;
+    double time_of_flight;
+    double range;
+} TrajectoryData;
+
 
 void handle_error(const char *msg) {
     perror(msg);
@@ -73,7 +82,7 @@ void send_request(int sock, const char *message) {
     }
 }
 
-void receive_response(int sock, char *buffer) {
+void receive_response(int sock, char *buffer,  TrajectoryData *data, int ac) {
     fd_set readfds;
     struct timeval timeout;
     timeout.tv_sec = TIMEOUT_SEC;
@@ -87,7 +96,7 @@ void receive_response(int sock, char *buffer) {
         if (activity < 0) {
             handle_error("Select error");
         } else if (activity == 0) {
-            fprintf(stderr, "Timeout occurred! No data received.\n");
+            // fprintf(stderr, "Timeout occurred! No data received.\n");
             return;
         } else if (activity > 0) {
             if (FD_ISSET(sock, &readfds)) {
@@ -99,7 +108,17 @@ void receive_response(int sock, char *buffer) {
                     break; 
                 }
                 buffer[len] = '\0';
-                return;
+                printf("Response: %s\n", buffer);
+                if(ac == 7){
+                    sscanf(buffer, 
+                       "HTTP/1.1 200 OK\nContent-Type: application/json\n\n{\"max_height\":%lf, \"time_of_flight\":%lf, \"range\":%lf}",
+                       &data->max_height, &data->time_of_flight, &data->range);
+                       
+                    printf("max_height: %.2f m\n", data->max_height);
+                    printf("time_of_flight: %.2f s\n", data->time_of_flight);
+                    printf("range: %.2f m\n", data->range);
+               }     
+
             }
         }
     }
@@ -160,66 +179,80 @@ void validate_arguments(int ac, char *av[]) {
     }
 }
 
-void draw_trajectory(SDL_Renderer *renderer, double v0, double theta) {
-   
+void draw_trajectory(SDL_Renderer *renderer, double v0, double angle, double max_height, double range) {
+    double rad_angle = angle * M_PI / 180.0;
+    double t, x, y;
+    double time_step = 0.01;
     double g = 9.82;
-    double radian = theta * M_PI / 180.0;
-    double time_of_flight = (2 * v0 * sin(radian)) / g;
-    double max_time = time_of_flight;
-    double time_step = max_time / 1000;
-    double scale_factor_x = WINDOW_WIDTH / (v0 * cos(radian) * max_time);
-    double scale_factor_y = WINDOW_HEIGHT / ((v0 * sin(radian)) * (v0 * sin(radian)) / (2 * g));
     
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-
-    for (double t = 0; t <= max_time; t += time_step) {
-        double x = v0 * cos(radian) * t;
-        double y = (v0 * sin(radian) * t) - (0.5 * g * t * t);
-        int screen_x = (int)(x * scale_factor_x);
-        int screen_y = WINDOW_HEIGHT - (int)(y * scale_factor_y);
-             
-        SDL_RenderDrawPoint(renderer, screen_x, screen_y);
+    if (range > WINDOW_WIDTH || max_height > WINDOW_HEIGHT) {
+      printf("\n\nWhen your max_height > WINDOW_HEIGHT or range > WINDOW_WIDTH you see static, fixed graphic\n\n");  
     }
+    else{
+        printf("\n\nYour max_height < WINDOW_HEIGHT and range < WINDOW_WIDTH, you see dinamic graphic\n\n");
+    }
+
+    for (t = 0; t <= 2 * v0 * sin(rad_angle) / g; t += time_step) {
+        x = v0 * cos(rad_angle) * t;        
+        y = v0 * sin(rad_angle) * t - 0.5 * g * t * t;        
+        int screen_x = (int)(x / range * WINDOW_WIDTH);
+        int screen_y = WINDOW_HEIGHT - (int)(y / max_height * WINDOW_HEIGHT);        
+        if (range >= 0 && range < WINDOW_WIDTH && max_height >= 0 && max_height < WINDOW_HEIGHT) {
+            SDL_RenderDrawPoint(renderer, x, WINDOW_HEIGHT - y);
+        } 
+        else {            
+            SDL_RenderDrawPoint(renderer, screen_x, screen_y);
+        }
+    }
+
 }
 
 
 
-
 int main(int ac, char *av[]) {
+  
     validate_arguments(ac, av);
+    
+    TrajectoryData data = {0};
+    char * ip = av[1];
+    int port = atof(av[2]);
+    char * method = av[3];
+    char * name = av[4];
+    if (ac == 7) {
+        data.initial_velocity = atof(av[5]);
+        data.launch_angle = atof(av[6]);        
+    } 
 
-    int sock = create_and_connect_socket(av[1], atoi(av[2]));
+    int sock = create_and_connect_socket(ip, port);
 
     char message[BUFFER_SIZE];
     char response[BUFFER_SIZE];
 
-    if (strcmp(av[3], "GET") == 0) {
+    if (strcmp(method, "GET") == 0) {
         if (ac == 7) {
-            construct_get_request(message, av[4], atof(av[5]), atof(av[6]));
+            construct_get_request(message, name, data.initial_velocity, data.launch_angle);
         } else {
-            snprintf(message, BUFFER_SIZE, "GET /?name=%s HTTP/1.1\r\n\r\n", av[4]);
+            snprintf(message, BUFFER_SIZE, "GET /?name=%s HTTP/1.1\r\n\r\n", name);
         }
-    } else if (strcmp(av[3], "POST") == 0) {
+    } else if (strcmp(method, "POST") == 0) {
         if (ac == 7) {
-            construct_post_request(message, av[4], atof(av[5]), atof(av[6]));
+            construct_post_request(message, name, data.initial_velocity, data.launch_angle);
         } else {
             fprintf(stderr, "POST request requires name, velocity, and angle parameters\n");
             exit(EXIT_FAILURE);
         }
     }
-
+ 
     send_request(sock, message);
-    receive_response(sock, response);
-
-    double initial_velocity = 40.0;  
-    double launch_angle = 60.0;     
-
-    if (ac == 7) {
-        initial_velocity = atof(av[5]);
-        launch_angle = atof(av[6]);
+    receive_response(sock, response, &data, ac);    
+    
+    
+   
+    if (ac == 5){
+        printf("\n\nIf you want see graphic then send POST or GET request with initial_velocity and launch_angle\n\n");
+        return 0;
     }
 
-   
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         fprintf(stderr, "Could not initialize SDL: %s\n", SDL_GetError());
@@ -238,6 +271,11 @@ int main(int ac, char *av[]) {
         return 1;
     }
 
+    SDL_RenderClear(renderer);
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);    
+    draw_trajectory(renderer, data.initial_velocity, data.launch_angle, data.max_height, data.range);
+    SDL_RenderPresent(renderer);
+
     int quit = 0;
     SDL_Event event;
     while (!quit) {
@@ -245,15 +283,8 @@ int main(int ac, char *av[]) {
             if (event.type == SDL_QUIT) {
                 quit = 1;
             }
-
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-
-        SDL_RenderClear(renderer);
-        draw_trajectory(renderer, initial_velocity, launch_angle);
         }
 
-        SDL_RenderPresent(renderer);
-        // pause();
     }
 
     SDL_DestroyRenderer(renderer);
